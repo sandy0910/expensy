@@ -5,6 +5,9 @@ from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
 from bson import ObjectId
+from dotenv import load_dotenv
+import os
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -19,10 +22,8 @@ class Database:
     def get_collection(self, collection_name):
         return self.db[collection_name]
 
-db = Database(
-    "mongodb://mongo:kyJnMmToPJkZqszDtULLbmRyMONNKjFB@junction.proxy.rlwy.net:18675",
-    "expense_tracker"
-)
+load_dotenv()
+db = Database(os.getenv("MONGO_URI"), "expense_tracker")
 
 
 # User management
