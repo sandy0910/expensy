@@ -19,7 +19,7 @@ class Database:
     def get_collection(self, collection_name):
         return self.db[collection_name]
 
-db = Database("mongodb://localhost:27017/", "expense_tracker")
+db = Database("mongodb://mongo:kyJnMmToPJkZqszDtULLbmRyMONNKjFB@junction.proxy.rlwy.net:18675", "expense_tracker")
 
 # User management
 class User:
