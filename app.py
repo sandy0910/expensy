@@ -150,7 +150,6 @@ class Transaction:
 
             # Define categories dynamically
             categories = set(self.decrypt_transaction_data(transaction.get('category')) for transaction in user_transactions)
-            print(category)
             
             total_expense = 0
             category_totals = {category: 0 for category in categories}
