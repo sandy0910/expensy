@@ -143,6 +143,7 @@ class Transaction:
             matching_transactions = [
                 transaction for transaction in user_transactions
                 if self.decrypt_transaction_data(transaction.get('userEmail')) == user_email
+                print("Successful")
             ]
 
             if not matching_transactions:
