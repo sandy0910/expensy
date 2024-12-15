@@ -321,6 +321,109 @@ def expense_stats():
     stats, status_code = transactions.calculate_expense_stats(user_email, month)
     return jsonify(stats), status_code
 
+@app.route('/expense_stats', methods=['GET'])
+def expense_stats():
+    user_email = request.args.get('email')
+    month = request.args.get('month')
+
+    if not user_email:
+        return jsonify({"error": "Email is required"}), 400
+    if not month:
+        return jsonify({"error": "Month is required"}), 400
+
+    stats, status_code = transactions.calculate_expense_stats(user_email, month)
+    return jsonify(stats), status_code
+
+@app.route('/save-category-data', methods=['POST'])
+def save_category_data():
+    """
+    Endpoint to save category data for a specific month and email.
+    """
+    try:
+        # Parse the incoming JSON data
+        data = request.json
+        email = data.get('email')
+        month = data.get('month')
+        category_data = data.get('category_data')
+
+        # Validate inputs
+        if not email or not month or not category_data:
+            return jsonify({"error": "Email, month, and category data are required"}), 400
+
+        # Get the current month
+        current_month = datetime.now().strftime('%B')  # e.g., 'December'
+
+        # Define the collection
+        collection = db.get_collection("category_data")
+
+        # Search for a record with the same email and current month
+        existing_record = collection.find_one({"email": email, "month": current_month})
+
+        if existing_record:
+            # Existing data found, update only valid categories (non -1)
+            updated_category_data = existing_record['category_data']
+
+            # Iterate through the new category data and update the existing data where valid
+            for category, value in category_data.items():
+                if value != -1:
+                    updated_category_data[category] = value
+
+            # Update the record with the updated category data
+            result = collection.update_one(
+                {"email": email, "month": current_month},  # Filter by email and month
+                {"$set": {"category_data": updated_category_data}}  # Set the new valid category data
+            )
+        else:
+            # If no existing record, insert new category data
+            result = collection.insert_one({
+                "email": email,
+                "month": current_month,
+                "category_data": category_data
+            })
+
+        # Check operation success
+        if result.matched_count > 0 or (hasattr(result, 'inserted_id') and result.inserted_id):
+            return jsonify({"message": "Category data saved successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to save category data"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+@app.route('/get-category-data', methods=['GET'])
+def get_category_data():
+    """
+    Endpoint to get category data for a specific month and email.
+    """
+    try:
+        # Get the email and month from the request arguments
+        email = request.args.get('email')
+        month = request.args.get('month')
+
+        # Validate inputs
+        if not email or not month:
+            return jsonify({"error": "Email and month are required"}), 400
+
+        # Get the current month if the month is not provided in the request
+        if not month:
+            month = datetime.now().strftime('%B')  # e.g., 'December'
+
+        # Define the collection
+        collection = db.get_collection("category_data")
+
+        # Search for a record with the same email and month
+        category_data_record = collection.find_one({"email": email, "month": month})
+
+        if category_data_record:
+            print(category_data_record)
+            return jsonify({"category_data": category_data_record['category_data']}), 200
+        else:
+            return jsonify({"message": "No category data found for the specified email and month"}), 404
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 # Run the Flask app
 if __name__ == '__main__':
